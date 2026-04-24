@@ -38,7 +38,7 @@ Implemented frontend areas:
 - Student home backed by linked `students`, `payments`, `checkins`, and `graduation_rules` data.
 - Student profile page with safe editable `profiles.full_name` and `profiles.phone` only; BJJ progression fields are read-only.
 - Admin QR generation/display UI for BJJ training sessions.
-- Student manual-code check-in UI. Camera QR scanning is not fully implemented yet.
+- Student QR camera scanning UI using a JS decoder fallback plus manual-code check-in fallback.
 
 Implemented Supabase areas:
 
@@ -61,7 +61,7 @@ Current verification status:
 
 - `pnpm typecheck` passes.
 - `pnpm lint` passes.
-- `pnpm test` passes with 20 tests.
+- `pnpm test` passes with 22 tests.
 - `pnpm build` passes, with a non-blocking Vite chunk-size warning.
 - `pnpm dlx supabase db reset` passes locally.
 - Deno is not installed in this environment, so Edge Functions have not been typechecked with `deno check` here.
@@ -74,7 +74,6 @@ Required environment variables and secrets:
 
 Known remaining MVP work:
 
-- Real JS QR camera scanner fallback for `/aluno/check-in`; current implemented flow is manual code plus camera placeholder.
 - Asaas Pix backend and UI: customer creation/linking, Pix cobranca creation/reuse, idempotent webhook processing, payment status updates, due-date renewal, Pix QR/copy-paste display.
 - Graduation manual promotion workflow and promotion audit logs.
 - Check-in correction/review audit workflow.
@@ -313,6 +312,25 @@ Phase containers:
 - `BJJ-4` Phase 5: Asaas Pix
 - `BJJ-6` Phase 6: Graduation
 - `BJJ-7` Phase 7: PWA Polish & Pilot
+
+Current remaining execution issues:
+
+- `BJJ-28` Build check-in correction and review workflow.
+- `BJJ-30` Implement Asaas customer and Pix cobranca flow.
+- `BJJ-33` Implement idempotent Asaas webhook processing.
+- `BJJ-29` Display Pix QR, copy-paste code, and payment history.
+- `BJJ-27` Build manual grau and faixa promotion workflow.
+- `BJJ-31` Polish PWA install, update prompt, and mobile pilot QA.
+- `BJJ-32` Verify Vercel deployment and production Supabase secrets.
+
+Linear tracking rules:
+
+- Before starting a non-trivial change, identify the matching Linear issue and move it to `In Progress` if work begins.
+- If no Linear issue exists for the discovered work, create a focused child issue under the correct phase container before or during implementation.
+- When exit criteria are met, move the issue to `Done` and add a Linear comment with the commit hash, verification commands, and any known caveats.
+- Keep parent phase issues aligned with child issue reality; do not leave a phase in Backlog when its child work is actively underway or complete.
+- After changing MVP scope, implementation status, or remaining work, update this `AGENTS.md` file in the same branch or commit.
+- Do not mark Asaas payment, QR security, graduation promotion, or PWA pilot work Done without trusted backend/security verification evidence.
 
 ## Implementation Discipline
 
