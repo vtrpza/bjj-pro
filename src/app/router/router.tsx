@@ -6,8 +6,10 @@ import { AcademyDashboardPage } from '../../features/academy/AcademyDashboardPag
 import { LoginPage } from '../../features/auth/LoginPage'
 import { PasswordResetPage } from '../../features/auth/PasswordResetPage'
 import { CheckinsPage } from '../../features/checkins/CheckinsPage'
+import { CheckinReviewPage } from '../../features/checkins/CheckinReviewPage'
 import { GraduationPage } from '../../features/graduation/GraduationPage'
 import { PaymentsPage } from '../../features/payments/PaymentsPage'
+import { StudentPaymentPage } from '../../features/payments/StudentPaymentPage'
 import { SettingsPage } from '../../features/settings/SettingsPage'
 import { StudentHomePage } from '../../features/student-home/StudentHomePage'
 import { StudentProfilePage } from '../../features/student-home/StudentProfilePage'
@@ -38,6 +40,7 @@ export const router = createBrowserRouter([
       { index: true, element: <AcademyDashboardPage /> },
       { path: 'alunos', element: <StudentsPage /> },
       { path: 'check-ins', element: <CheckinsPage /> },
+      { path: 'check-ins/review/:sessionId', element: <CheckinReviewPage /> },
       { path: 'mensalidades', element: <PaymentsPage /> },
       { path: 'graduacao', element: <GraduationPage /> },
       { path: 'configuracoes', element: <SettingsPage /> }
@@ -53,7 +56,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <StudentHomePage /> },
       { path: 'check-in', element: <StudentCheckinPage /> },
-      { path: 'mensalidade', element: <PaymentsPage /> },
+      { path: 'mensalidade', element: <StudentPaymentPage /> },
       { path: 'graduacao', element: <GraduationPage /> },
       { path: 'perfil', element: <StudentProfilePage /> }
     ]

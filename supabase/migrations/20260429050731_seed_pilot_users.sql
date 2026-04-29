@@ -1,0 +1,2 @@
+-- This migration is intentionally empty.
+-- User seeding is handled in supabase/seed.sql which runs AFTER all migrations.

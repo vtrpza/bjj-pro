@@ -13,15 +13,26 @@ export type ApiErrorCode =
   | 'server_error'
   | 'unauthorized'
 
+export type ApiErrorDetailCode =
+  | 'DUPLICATE_CHECKIN'
+  | 'INVALID_CODE'
+  | 'INVALID_TOKEN'
+  | 'NOT_MEMBER'
+  | 'SESSION_CLOSED'
+  | 'SESSION_NOT_FOUND'
+  | 'TOKEN_EXPIRED'
+
 export class ApiError extends Error {
   code: ApiErrorCode
+  errorCode?: ApiErrorDetailCode
   status: number
 
-  constructor(status: number, code: ApiErrorCode, message: string) {
+  constructor(status: number, code: ApiErrorCode, message: string, errorCode?: ApiErrorDetailCode) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
+    this.errorCode = errorCode
   }
 }
 
@@ -41,7 +52,13 @@ export function optionsResponse() {
 
 export function errorResponse(error: unknown) {
   if (error instanceof ApiError) {
-    return jsonResponse({ error: { code: error.code, message: error.message } }, error.status)
+    const body: { error: { code: ApiErrorCode; errorCode?: ApiErrorDetailCode; message: string } } = {
+      error: { code: error.code, message: error.message }
+    }
+    if (error.errorCode) {
+      body.error.errorCode = error.errorCode
+    }
+    return jsonResponse(body, error.status)
   }
 
   return jsonResponse({ error: { code: 'server_error', message: 'Erro interno.' } }, 500)

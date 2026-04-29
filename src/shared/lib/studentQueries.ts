@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { BjjBeltOption, StudentRecord } from '../domain/academy'
-import type { GraduationRuleRecord, StudentCheckinRecord, StudentPaymentRecord, StudentProfileFormValues } from '../domain/studentSummary'
+import type { GraduationRuleRecord, StudentCheckinRecord, StudentPaymentRecord, StudentProfileFormValues, PixPaymentResponse } from '../domain/studentSummary'
 import { toStudentProfilePayload } from '../domain/studentSummary'
 
 type ProfileRecord = {
@@ -167,5 +167,84 @@ export async function updateStudentProfile({
 
   if (error) {
     throw error
+  }
+}
+
+export async function fetchStudentPayments(
+  client: SupabaseClient | null,
+  profileId: string | undefined,
+  academyId: string | undefined
+): Promise<StudentPaymentRecord[]> {
+  assertSupabase(client)
+  assertProfileContext(profileId, academyId)
+
+  const { data: studentData, error: studentError } = await client
+    .from('students')
+    .select('id')
+    .eq('academy_id', academyId)
+    .eq('profile_id', profileId)
+    .maybeSingle()
+
+  if (studentError) {
+    throw studentError
+  }
+
+  if (!studentData) {
+    return []
+  }
+
+  const { data, error } = await client
+    .from('payments')
+    .select('id, academy_id, student_id, amount, status, due_date, paid_at, pix_copy_paste, pix_qr_code_payload')
+    .eq('student_id', studentData.id)
+    .order('due_date', { ascending: false })
+    .limit(12)
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []) as StudentPaymentRecord[]
+}
+
+export async function requestPixPayment({
+  client
+}: {
+  client: SupabaseClient | null
+}): Promise<PixPaymentResponse> {
+  assertSupabase(client)
+
+  const { data, error } = await client.functions.invoke('asaas-pix-create', {
+    body: {}
+  })
+
+  if (error) {
+    throw new Error(error.message ?? 'Erro ao solicitar pagamento Pix.')
+  }
+
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Resposta invalida do servidor de pagamento.')
+  }
+
+  const response = data as Record<string, unknown>
+
+  const paymentId = typeof response.paymentId === 'string' ? response.paymentId : ''
+  const pixQrCodePayload = typeof response.pixQrCodePayload === 'string' ? response.pixQrCodePayload : ''
+  const pixCopyPaste = typeof response.pixCopyPaste === 'string' ? response.pixCopyPaste : ''
+  const amount = typeof response.amount === 'number' ? response.amount : 0
+  const dueDate = typeof response.dueDate === 'string' ? response.dueDate : ''
+  const status = typeof response.status === 'string' ? response.status : ''
+
+  if (!paymentId || !pixQrCodePayload || !pixCopyPaste) {
+    throw new Error('Dados do pagamento Pix incompletos.')
+  }
+
+  return {
+    amount,
+    dueDate,
+    paymentId,
+    pixCopyPaste,
+    pixQrCodePayload,
+    status
   }
 }

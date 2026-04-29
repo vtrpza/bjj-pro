@@ -16,6 +16,13 @@ const defaultValues: StudentProfileFormValues = {
   phone: ''
 }
 
+function formatPhone(raw: string) {
+  const digits = raw.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits.length ? `(${digits}` : ''
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
 export function StudentProfilePage() {
   const { isPlaceholderMode, profile } = useAuth()
   const academyId = profile?.academyId ?? undefined
@@ -80,7 +87,15 @@ export function StudentProfilePage() {
             </label>
             <label className="field">
               <span>Telefone</span>
-              <input {...form.register('phone')} inputMode="tel" placeholder="(11) 99999-9999" />
+              <input
+                {...form.register('phone')}
+                inputMode="tel"
+                placeholder="(11) 99999-9999"
+                onChange={(e) => {
+                  const formatted = formatPhone(e.target.value)
+                  form.setValue('phone', formatted, { shouldValidate: true, shouldDirty: true })
+                }}
+              />
               {form.formState.errors.phone ? <small>{form.formState.errors.phone.message}</small> : null}
             </label>
             {mutation.error ? <p className="form-error">Nao foi possivel salvar seu perfil.</p> : null}

@@ -146,3 +146,12 @@ export function toStudentProfilePayload(values: StudentProfileFormValues) {
     phone: values.phone.trim() || null
   }
 }
+
+export type PixPaymentResponse = {
+  paymentId: string
+  pixQrCodePayload: string
+  pixCopyPaste: string
+  amount: number
+  dueDate: string
+  status: string
+}

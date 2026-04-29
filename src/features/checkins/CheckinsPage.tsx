@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { useAuth } from '../../app/providers/AuthContext'
 import { Button } from '../../shared/components/Button'
@@ -79,6 +80,11 @@ export function CheckinsPage() {
           <p>Use este codigo quando a camera do aluno nao estiver disponivel. Ele expira junto com o QR.</p>
           <strong className="manual-code">{qrSession && !isExpired ? qrSession.manualCode : '------'}</strong>
           {qrSession ? <small>Expira em {new Date(qrSession.expiresAt).toLocaleTimeString('pt-BR')}</small> : null}
+          {qrSession && !isExpired ? (
+            <Link to={`/admin/check-ins/review/${qrSession.sessionId}`} style={{ marginTop: '0.75rem', display: 'inline-block' }}>
+              <Button variant="secondary">Revisar presencas</Button>
+            </Link>
+          ) : null}
           {isPlaceholderMode ? <small className="form-error">Modo local: configure o Supabase para acionar Edge Functions.</small> : null}
           {errorMessage ? <small className="form-error">{errorMessage}</small> : null}
         </div>

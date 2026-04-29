@@ -60,3 +60,22 @@ set
   required_checkins = excluded.required_checkins,
   minimum_days = excluded.minimum_days,
   active = excluded.active;
+
+-- ============================================================
+-- Pilot users: vhnpouza@gmail.com (owner) and thupyk@gmail.com (student)
+-- Default password: Pilot@2026! (change after first login)
+--
+-- NOTE: Auth users MUST be created via the Supabase Auth API
+-- (not direct SQL) so passwords are hashed correctly.
+-- Run these after seeding the database:
+--
+--   curl -X POST http://localhost:54321/auth/v1/signup \
+--     -H "apikey: <anon-key>" -H "Content-Type: application/json" \
+--     -d '{"email": "vhnpouza@gmail.com", "password": "Pilot@2026!"}'
+--
+--   curl -X POST http://localhost:54321/auth/v1/signup \
+--     -H "apikey: <anon-key>" -H "Content-Type: application/json" \
+--     -d '{"email": "thupyk@gmail.com", "password": "Pilot@2026!"}'
+--
+-- Then link profiles/memberships with the returned user IDs.
+-- ============================================================

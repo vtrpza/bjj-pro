@@ -52,6 +52,7 @@ export type AcademySettings = {
   email: string | null
   phone: string | null
   address: string | null
+  checkins_per_grau: number | null
 }
 
 export type DashboardMetrics = {
@@ -63,6 +64,54 @@ export type DashboardMetrics = {
 }
 
 export const beltOptions: BjjBelt[] = ['Branca', 'Azul', 'Roxa', 'Marrom', 'Preta', 'Cinza', 'Amarela', 'Laranja', 'Verde']
+
+export const ADULT_BELT_PATH: BjjBelt[] = ['Branca', 'Azul', 'Roxa', 'Marrom', 'Preta']
+export const KIDS_BELT_PATH: BjjBelt[] = ['Branca', 'Cinza', 'Amarela', 'Laranja', 'Verde']
+
+export const BELT_COLOR_MAP: Record<BjjBelt, string> = {
+  Branca: '#f8f8f8',
+  Azul: '#0033a0',
+  Roxa: '#6a0dad',
+  Marrom: '#6b3e1b',
+  Preta: '#111111',
+  Cinza: '#808080',
+  Amarela: '#ffd700',
+  Laranja: '#ff8c00',
+  Verde: '#228b22'
+}
+
+export type GraduationStudentRecord = StudentRecord & {
+  checkinsForCurrentGrau: number
+  requiredCheckins: number
+  isReady: boolean
+}
+
+export type GraduationPromotionRequest = {
+  studentId: string
+  newBeltId: string | null
+  newGrau: number
+  reason: string
+}
+
+export type GraduationPromotionResponse = {
+  success: boolean
+  studentId: string
+  newBeltId: string | null
+  newGrau: number
+}
+
+export function getNextBeltInPath(currentBelt: BjjBelt, audience: 'adult' | 'kids'): BjjBelt | null {
+  const path = audience === 'adult' ? ADULT_BELT_PATH : KIDS_BELT_PATH
+  const currentIndex = path.indexOf(currentBelt)
+  if (currentIndex < 0 || currentIndex >= path.length - 1) {
+    return null
+  }
+  return path[currentIndex + 1]
+}
+
+export function getBeltClass(belt: BjjBelt): string {
+  return `belt-${belt.toLowerCase()}`
+}
 
 export const studentFormSchema = z.object({
   fullName: z.string().trim().min(3, 'Informe o nome do aluno.'),
@@ -80,12 +129,51 @@ export const academySettingsSchema = z.object({
   primaryColor: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, 'Use uma cor no formato #000000.'),
   contactEmail: z.string().trim().email('Informe um e-mail valido.').or(z.literal('')),
   contactPhone: z.string().trim().max(32, 'Telefone muito longo.').or(z.literal('')),
-  address: z.string().trim().max(180, 'Endereco muito longo.').or(z.literal(''))
+  address: z.string().trim().max(180, 'Endereco muito longo.').or(z.literal('')),
+  checkinsPerGrau: z.string().trim().refine((val) => {
+    const num = Number(val)
+    return Number.isInteger(num) && num >= 1 && num <= 30
+  }, { message: 'Informe um numero entre 1 e 30.' })
 })
 
 export type StudentFormValues = z.infer<typeof studentFormSchema>
 
 export type AcademySettingsFormValues = z.infer<typeof academySettingsSchema>
+
+export type CheckinStatus = 'valid' | 'cancelled'
+
+export type CheckinSource = 'qr' | 'manual' | 'correction'
+
+export type CheckinReviewRecord = {
+  id: string
+  academy_id: string
+  student_id: string
+  student_name: string
+  training_session_id: string
+  source: CheckinSource
+  checked_in_at: string
+  status: CheckinStatus
+}
+
+export type CheckinCorrectionRequest = {
+  checkinId: string
+  reason: string
+}
+
+export type CheckinCorrectionResponse = {
+  success: boolean
+  checkinId: string
+  reason: string
+}
+
+export type TrainingSessionRecord = {
+  id: string
+  academy_id: string
+  title: string
+  training_date: string
+  status: string
+  created_at: string
+}
 
 export function toNullableText(value: string) {
   const trimmed = value.trim()
@@ -189,6 +277,7 @@ export function toAcademySettingsPayload(values: AcademySettingsFormValues) {
     primary_color: values.primaryColor,
     email: toNullableText(values.contactEmail),
     phone: toNullableText(values.contactPhone),
-    address: toNullableText(values.address)
+    address: toNullableText(values.address),
+    checkins_per_grau: Number(values.checkinsPerGrau)
   }
 }

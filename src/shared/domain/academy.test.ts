@@ -130,6 +130,7 @@ describe('validacao de formularios', () => {
   it('valida e normaliza configuracoes da academia', () => {
     const values = academySettingsSchema.parse({
       address: '',
+      checkinsPerGrau: '8',
       contactEmail: 'contato@academia.com',
       contactPhone: '',
       logoUrl: '',
@@ -138,6 +139,7 @@ describe('validacao de formularios', () => {
     })
 
     expect(toAcademySettingsPayload(values)).toMatchObject({
+      checkins_per_grau: 8,
       phone: null,
       logo_url: null,
       name: 'Alpha Force Jiu-Jitsu',

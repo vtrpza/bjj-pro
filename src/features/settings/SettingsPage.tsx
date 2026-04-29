@@ -13,6 +13,7 @@ import { supabase } from '../../shared/lib/supabase'
 
 const defaultSettingsValues: AcademySettingsFormValues = {
   address: '',
+  checkinsPerGrau: '8',
   contactEmail: '',
   contactPhone: '',
   logoUrl: '',
@@ -23,12 +24,17 @@ const defaultSettingsValues: AcademySettingsFormValues = {
 function toSettingsFormValues(settings: AcademySettings | null): AcademySettingsFormValues {
   return {
     address: settings?.address ?? '',
+    checkinsPerGrau: String(settings?.checkins_per_grau ?? 8),
     contactEmail: settings?.email ?? '',
     contactPhone: settings?.phone ?? '',
     logoUrl: settings?.logo_url ?? '',
     name: settings?.name ?? '',
     primaryColor: settings?.primary_color ?? '#000000'
   }
+}
+
+function applyAccentColor(color: string) {
+  document.documentElement.style.setProperty('--c-accent', color)
 }
 
 export function SettingsPage() {
@@ -57,6 +63,15 @@ export function SettingsPage() {
       form.reset(toSettingsFormValues(settingsQuery.data))
     }
   }, [form, settingsQuery.data])
+
+  useEffect(() => {
+    const settings = settingsQuery.data
+    if (settings?.primary_color) {
+      applyAccentColor(settings.primary_color)
+    }
+  }, [settingsQuery.data])
+
+  const watchedColor = form.watch('primaryColor')
 
   return (
     <section>
@@ -110,6 +125,19 @@ export function SettingsPage() {
             </label>
           </div>
 
+          <div className="card brand-preview-card">
+            <h2>Visual da marca</h2>
+            <div className="brand-preview">
+              <div className="color-swatch" style={{ background: watchedColor }} />
+              <div>
+                <p>Cor selecionada: <strong>{watchedColor}</strong></p>
+                <Button variant="accent" style={{ background: watchedColor }} type="button">
+                  Botao de exemplo
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div className="field-grid">
             <label className="field">
               <span>E-mail de contato</span>
@@ -128,6 +156,13 @@ export function SettingsPage() {
             <span>Endereco</span>
             <input {...form.register('address')} placeholder="Rua, numero, bairro" />
             {form.formState.errors.address ? <small>{form.formState.errors.address.message}</small> : null}
+          </label>
+
+          <label className="field">
+            <span>Check-ins por grau</span>
+            <input {...form.register('checkinsPerGrau')} inputMode="numeric" type="number" min={1} max={30} placeholder="8" />
+            {form.formState.errors.checkinsPerGrau ? <small>{form.formState.errors.checkinsPerGrau.message}</small> : null}
+            <small className="field-hint">Numero de check-ins necessario para sugerir promocao de grau</small>
           </label>
 
           {mutation.error ? <p className="form-error">Nao foi possivel salvar as configuracoes da academia.</p> : null}
