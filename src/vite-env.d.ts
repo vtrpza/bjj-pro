@@ -3,11 +3,12 @@
 /// <reference types="vite-plugin-pwa/info" />
 
 declare module 'virtual:pwa-register/react' {
+  import type { Dispatch, SetStateAction } from 'react'
+
   export function useRegisterSW(): {
-    needRefresh: boolean
-    updateSW: (reloadPage?: boolean) => void
-    offlineReady: boolean
-    setOfflineReady: (value: boolean) => void
+    needRefresh: [boolean, Dispatch<SetStateAction<boolean>>]
+    updateServiceWorker: (reloadPage?: boolean) => Promise<void>
+    offlineReady: [boolean, Dispatch<SetStateAction<boolean>>]
   }
 }
 

@@ -173,7 +173,7 @@ p {
   bottom: 0;
   box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.08);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   left: 0;
   padding: 8px 8px max(8px, env(safe-area-inset-bottom));
   position: fixed;
@@ -352,6 +352,34 @@ p {
 
 .field input[type="color"] {
   padding: 4px;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper input {
+  padding-right: 44px;
+}
+
+.password-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--c-text-dim);
+  cursor: pointer;
+  display: inline-flex;
+  height: 42px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 42px;
+}
+
+.password-toggle:hover {
+  color: var(--c-text);
 }
 
 .field small,

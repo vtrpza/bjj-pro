@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
 const DISMISS_KEY = 'bjj-update-dismissed'
@@ -11,19 +11,20 @@ function getIsDismissed(): boolean {
 }
 
 export function UpdatePrompt() {
-  const { needRefresh, updateSW } = useRegisterSW()
+  const { needRefresh: needRefreshTuple, updateServiceWorker } = useRegisterSW()
+  const [needRefresh] = needRefreshTuple
+  const [dismissed, setDismissed] = useState(getIsDismissed)
 
   const handleUpdate = useCallback(() => {
-    if (typeof updateSW === 'function') {
-      updateSW(true)
-    }
-  }, [updateSW])
+    updateServiceWorker(true)
+  }, [updateServiceWorker])
 
   const handleDismiss = useCallback(() => {
     localStorage.setItem(DISMISS_KEY, String(Date.now()))
+    setDismissed(true)
   }, [])
 
-  if (!needRefresh || getIsDismissed()) return null
+  if (!needRefresh || dismissed) return null
 
   return (
     <div className="update-prompt" role="status">

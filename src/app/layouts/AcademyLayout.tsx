@@ -30,7 +30,7 @@ export function AcademyLayout() {
       </div>
 
       <nav className="bottom-nav" aria-label="Navegacao principal da academia">
-        {adminNavigation.slice(0, 5).map((item) => (
+        {adminNavigation.map((item) => (
           <NavLink className="nav-item" key={item.href} to={item.href} end={item.end}>
             <span aria-hidden="true">{item.icon}</span>
             {item.shortLabel ?? item.label}
