@@ -108,7 +108,7 @@ src/
       academy.ts                    # Types, Zod schemas, belt paths, dashboard metrics, formatters
       studentSummary.ts             # Student-facing summary calculations
     lib/
-      supabase.ts                   # Supabase client with persistSession: false
+      supabase.ts                   # Supabase client with persistSession: true
       academyQueries.ts             # TanStack Query fetchers for students, belts, settings
       studentQueries.ts             # TanStack Query fetchers for student home data
       qrCheckin.ts                  # QR token parsing, expiry math, check-in body builders
@@ -249,7 +249,7 @@ Configured in `vercel.json`.
 - **QR integrity:** QR tokens are HMAC-SHA256 signed with a server-side secret. Verification happens in the `checkin-validate` edge function. Admins cannot write QR token fields on `training_sessions` via RLS.
 - **Check-in uniqueness:** One check-in per student per session enforced by a unique constraint (`checkins_unique_student_session`). Cancelled check-ins use a partial unique index so they don't block re-check-ins.
 - **Audit trail:** All sensitive actions (payment updates, check-in creation/correction, graduation promotions) write to `audit_logs`.
-- **Auth persistence:** Supabase client uses `persistSession: false`. Do not add localStorage auth persistence without explicit security decision.
+- **Auth persistence:** Supabase client uses `persistSession: true` so tokens auto-refresh across reloads.
 - **Idempotency:** Asaas webhook stores events by `asaas_event_id` and skips already-processed events.
 
 ## BJJ Graduation Rules
