@@ -15,6 +15,7 @@ import { StudentHomePage } from '../../features/student-home/StudentHomePage'
 import { StudentProfilePage } from '../../features/student-home/StudentProfilePage'
 import { StudentsPage } from '../../features/students/StudentsPage'
 import { StudentCheckinPage } from '../../features/checkins/StudentCheckinPage'
+import { StudentSchedulePage } from '../../features/student-home/StudentSchedulePage'
 
 export const router = createBrowserRouter([
   {
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
       { path: 'check-in', element: <StudentCheckinPage /> },
       { path: 'mensalidade', element: <StudentPaymentPage /> },
       { path: 'graduacao', element: <GraduationPage /> },
+      { path: 'horarios', element: <StudentSchedulePage /> },
       { path: 'perfil', element: <StudentProfilePage /> }
     ]
   }

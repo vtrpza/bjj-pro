@@ -14,9 +14,14 @@ export type ApiErrorCode =
   | 'unauthorized'
 
 export type ApiErrorDetailCode =
+  | 'ALREADY_CANCELLED'
+  | 'CHECKIN_NOT_FOUND'
   | 'DUPLICATE_CHECKIN'
+  | 'INVALID_CHECKIN'
   | 'INVALID_CODE'
+  | 'INVALID_REASON'
   | 'INVALID_TOKEN'
+  | 'NOT_ADMIN'
   | 'NOT_MEMBER'
   | 'SESSION_CLOSED'
   | 'SESSION_NOT_FOUND'

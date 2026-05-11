@@ -3,7 +3,7 @@ import { requireEnv } from './env.ts'
 import { ApiError } from './http.ts'
 
 export function createServiceClient() {
-  return createClient(requireEnv('APP_SUPABASE_URL'), requireEnv('APP_SUPABASE_SERVICE_ROLE_KEY'), {
+  return createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'), {
     auth: {
       persistSession: false
     }

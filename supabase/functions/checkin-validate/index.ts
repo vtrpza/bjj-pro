@@ -28,11 +28,6 @@ Deno.serve(async (request) => {
 
     const secret = requireEnv('QR_TOKEN_SECRET')
     const tokenPayload = token ? await verifyQrToken(token, secret) : null
-
-    if (token && !tokenPayload) {
-      throw new ApiError(403, 'forbidden', 'Assinatura do QR invalida.', 'INVALID_TOKEN')
-    }
-
     const nonce = tokenPayload?.nonce ?? manualCode?.toUpperCase()
 
     if (!nonce) {

@@ -10,9 +10,10 @@ type PromotionBody = {
 }
 
 function parseBody(raw: Record<string, unknown>): PromotionBody {
-  const studentId = typeof raw.studentId === 'string' ? raw.studentId : ''
-  const academyId = typeof raw.academyId === 'string' ? raw.academyId : ''
-  const newBeltId = typeof raw.newBeltId === 'string' ? raw.newBeltId : null
+  const studentId = typeof raw.studentId === 'string' ? raw.studentId.trim() : ''
+  const academyId = typeof raw.academyId === 'string' ? raw.academyId.trim() : ''
+  const rawBeltId = typeof raw.newBeltId === 'string' ? raw.newBeltId.trim() : null
+  const newBeltId = rawBeltId && rawBeltId.length > 0 ? rawBeltId : null
   const newGrau = typeof raw.newGrau === 'number' ? raw.newGrau : 0
   const reason = typeof raw.reason === 'string' ? raw.reason : ''
 
@@ -68,6 +69,8 @@ async function validatePromotionPath(
   newBeltId: string | null,
   newGrau: number
 ) {
+  console.log('[graduation-promote] querying student:', { studentId, academyId })
+
   const { data: student, error: studentError } = await supabase
     .from('students')
     .select('id, academy_id, belt_id, grau, full_name, bjj_belts(id, audience, name, rank, max_grau)')
@@ -75,9 +78,18 @@ async function validatePromotionPath(
     .eq('academy_id', academyId)
     .single()
 
+  console.log('[graduation-promote] student query result:', { found: !!student, errorCode: studentError?.code, errorMessage: studentError?.message })
+
   if (studentError) {
     if (studentError.code === 'PGRST116') {
-      throw new ApiError(404, 'not_found', 'Aluno nao encontrado nesta academia.')
+      // Verificar se o aluno existe sem filtro de academy_id para debug
+      const { data: anyStudent, error: anyError } = await supabase
+        .from('students')
+        .select('id, academy_id, full_name')
+        .eq('id', studentId)
+        .maybeSingle()
+      console.log('[graduation-promote] student without academy filter:', { found: !!anyStudent, academyId: anyStudent?.academy_id, error: anyError?.message })
+      throw new ApiError(404, 'not_found', `Aluno ${studentId} nao encontrado na academia ${academyId}.`)
     }
     throw studentError
   }
@@ -88,7 +100,11 @@ async function validatePromotionPath(
   }
 
   const currentGrau = student.grau
-  const isBeltChange = newBeltId !== null && newBeltId !== student.belt_id
+  const studentBeltId = (student.belt_id ?? '').toString().toLowerCase()
+  const requestedBeltId = (newBeltId ?? '').toString().toLowerCase()
+  const isBeltChange = requestedBeltId.length > 0 && requestedBeltId !== studentBeltId
+
+  console.log('[graduation-promote] studentId:', studentId, 'currentBeltId:', studentBeltId, 'requestedBeltId:', requestedBeltId, 'isBeltChange:', isBeltChange, 'currentGrau:', currentGrau, 'newGrau:', newGrau)
 
   if (isBeltChange) {
     const { data: newBelt, error: beltError } = await supabase
@@ -112,9 +128,9 @@ async function validatePromotionPath(
     if (newGrau !== 0 && newGrau !== 1) {
       throw new ApiError(400, 'bad_request', 'Ao trocar de faixa, o grau deve ser 0 ou 1.')
     }
-  } else if (newBeltId === null || newBeltId === student.belt_id) {
+  } else {
     if (newGrau <= currentGrau) {
-      throw new ApiError(400, 'bad_request', 'Novo grau deve ser maior que o atual.')
+      throw new ApiError(400, 'bad_request', `Novo grau (${newGrau}) deve ser maior que o atual (${currentGrau}).`)
     }
 
     if (newGrau > currentBelt.max_grau) {
@@ -140,6 +156,8 @@ Deno.serve(async (request) => {
     const supabase = createServiceClient()
     const user = await getAuthUser(request, supabase)
     const rawBody = await readJsonObject(request)
+    console.log('[graduation-promote] raw body keys:', Object.keys(rawBody))
+    console.log('[graduation-promote] raw body:', JSON.stringify(rawBody))
     const body = parseBody(rawBody)
 
     await verifyAdminMembership(supabase, user.id, body.academyId)
@@ -158,14 +176,19 @@ Deno.serve(async (request) => {
     }
     updatePayload.grau = body.newGrau
 
-    const { error: updateError } = await supabase
+    const { error: updateError, data: updatedStudents } = await supabase
       .from('students')
       .update(updatePayload)
       .eq('id', body.studentId)
       .eq('academy_id', body.academyId)
+      .select()
 
     if (updateError) {
       throw updateError
+    }
+
+    if (!updatedStudents || updatedStudents.length === 0) {
+      throw new ApiError(404, 'not_found', 'Aluno nao encontrado nesta academia.')
     }
 
     const { data: newBeltData } = body.newBeltId

@@ -154,8 +154,7 @@ async function handlePaymentConfirmed(
     .from('payments')
     .update({ paid_at: now, status: 'paid' })
     .eq('id', payment.id)
-    .eq('status', 'pending')
-    .or('status.eq.overdue')
+    .in('status', ['pending', 'overdue'])
 
   if (updateError) {
     throw updateError

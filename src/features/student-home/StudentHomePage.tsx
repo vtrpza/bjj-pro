@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../app/providers/AuthContext'
+import { useAcademySettings } from '../../app/providers/AcademySettingsContext'
 import { PageHeader } from '../../shared/components/PageHeader'
 import { StatCard } from '../../shared/components/StatCard'
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components/StateViews'
 import { buildStudentSummary } from '../../shared/domain/studentSummary'
 import type { BjjBelt } from '../../shared/domain/academy'
+import { getCurrentPeriod, getNextPeriod, getTodaySchedule, formatPeriod } from '../../shared/domain/academy'
 import { fetchLinkedStudentExperience } from '../../shared/lib/studentQueries'
 import { supabase } from '../../shared/lib/supabase'
 
@@ -33,6 +35,7 @@ function formatCheckinTime(isoString: string) {
 
 export function StudentHomePage() {
   const { isPlaceholderMode, profile } = useAuth()
+  const { settings } = useAcademySettings()
   const academyId = profile?.academyId ?? undefined
   const canUseSupabase = Boolean(supabase && academyId && profile?.id && !isPlaceholderMode)
   const studentQuery = useQuery({
@@ -53,6 +56,10 @@ export function StudentHomePage() {
   const lastCheckin = experience?.checkins?.[0] ?? null
   const studentBelt = experience?.student?.belt_name ?? null
   const beltClass = studentBelt ? beltClassMap[studentBelt] : 'belt-branca'
+
+  const todaySchedule = getTodaySchedule(settings?.opening_hours)
+  const currentPeriod = getCurrentPeriod(todaySchedule)
+  const nextPeriod = getNextPeriod(todaySchedule)
 
   return (
     <section>
@@ -94,6 +101,28 @@ export function StudentHomePage() {
             />
             <StatCard label="Graduacao" value={summary.beltLabel} detail={summary.progressDetail} />
           </div>
+
+          {settings?.opening_hours ? (
+            <div className="card next-card schedule-card">
+              <h2>🕐 Horarios de hoje</h2>
+              {todaySchedule.length === 0 ? (
+                <p>Sem aulas programadas para hoje.</p>
+              ) : (
+                <>
+                  {todaySchedule.map((period, i) => (
+                    <div className={`schedule-period ${currentPeriod === period ? 'current' : ''}`} key={i}>
+                      <span className="schedule-time">{formatPeriod(period)}</span>
+                      {currentPeriod === period && <span className="schedule-badge">Agora</span>}
+                    </div>
+                  ))}
+                  {nextPeriod && !currentPeriod && (
+                    <p className="schedule-next">Proxima aula: {formatPeriod(nextPeriod)}</p>
+                  )}
+                  <Link className="schedule-link" to="/aluno/horarios">Ver horarios da semana</Link>
+                </>
+              )}
+            </div>
+          ) : null}
 
           <div className="card next-card">
             <h2>📈 Progresso informado por presencas</h2>

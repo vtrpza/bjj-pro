@@ -109,14 +109,19 @@ function PromotionModal({
     ? belts.find((b) => b.name === nextBelt && b.audience === student.belt_audience)
     : null
 
-  const canPromoteGrau = student.grau < (student as unknown as { max_grau: number }).max_grau
+  const currentBeltOption = belts.find((b) => b.id === student.belt_id)
+  const maxGrau = currentBeltOption?.max_grau ?? 4
+  const canPromoteGrau = student.grau < maxGrau
 
   const [newGrau, setNewGrau] = useState(student.grau + 1)
   const [newBeltId, setNewBeltId] = useState<string>('')
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = useCallback(() => {
+    if (isSubmitting) return
+
     if (!reason.trim() || reason.trim().length < 3) {
       setError('Informe um motivo com pelo menos 3 caracteres.')
       return
@@ -127,13 +132,14 @@ function PromotionModal({
       return
     }
 
+    setIsSubmitting(true)
     onSubmit({
       newBeltId: newBeltId || null,
       newGrau,
       reason: reason.trim(),
       studentId: student.id
     })
-  }, [canPromoteGrau, newBeltId, newGrau, reason, student.id, onSubmit])
+  }, [canPromoteGrau, isSubmitting, newBeltId, newGrau, reason, student.id, onSubmit])
 
   const targetBeltLabel = newBeltId
     ? belts.find((b) => b.id === newBeltId)?.name ?? student.belt_name
@@ -210,7 +216,9 @@ function PromotionModal({
 
         <div className="modal-footer">
           <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSubmit}>Confirmar Promocao</Button>
+          <Button disabled={isSubmitting} onClick={handleSubmit}>
+            {isSubmitting ? 'Processando...' : 'Confirmar Promocao'}
+          </Button>
         </div>
       </div>
     </div>
@@ -365,6 +373,7 @@ function AdminGraduationView() {
 
       {promotingStudent && belts && (
         <PromotionModal
+          key={promotingStudent.id}
           belts={belts}
           student={promotingStudent}
           onClose={() => setPromotingStudent(null)}
@@ -375,7 +384,11 @@ function AdminGraduationView() {
       {promoteMutation.isPending && (
         <div className="modal-backdrop">
           <div className="modal-content">
-            <p>Processando promocao...</p>
+            <div className="loading-modal">
+              <div className="loading-spinner" aria-hidden="true" />
+              <h2>Processando promocao</h2>
+              <p>Aguarde enquanto registramos a graduacao do aluno...</p>
+            </div>
           </div>
         </div>
       )}

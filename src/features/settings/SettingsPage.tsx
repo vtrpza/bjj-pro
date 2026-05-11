@@ -6,10 +6,11 @@ import { useAuth } from '../../app/providers/AuthContext'
 import { Button } from '../../shared/components/Button'
 import { EmptyState, ErrorState, LoadingState } from '../../shared/components/StateViews'
 import { PageHeader } from '../../shared/components/PageHeader'
-import { academySettingsSchema } from '../../shared/domain/academy'
+import { academySettingsSchema, getEmptyOpeningHours } from '../../shared/domain/academy'
 import type { AcademySettings, AcademySettingsFormValues } from '../../shared/domain/academy'
 import { fetchAcademySettings, updateAcademySettings } from '../../shared/lib/academyQueries'
 import { supabase } from '../../shared/lib/supabase'
+import { OpeningHoursEditor } from './OpeningHoursEditor'
 
 const defaultSettingsValues: AcademySettingsFormValues = {
   address: '',
@@ -18,6 +19,7 @@ const defaultSettingsValues: AcademySettingsFormValues = {
   contactPhone: '',
   logoUrl: '',
   name: '',
+  openingHours: getEmptyOpeningHours(),
   primaryColor: '#000000'
 }
 
@@ -29,12 +31,9 @@ function toSettingsFormValues(settings: AcademySettings | null): AcademySettings
     contactPhone: settings?.phone ?? '',
     logoUrl: settings?.logo_url ?? '',
     name: settings?.name ?? '',
+    openingHours: settings?.opening_hours ?? getEmptyOpeningHours(),
     primaryColor: settings?.primary_color ?? '#000000'
   }
-}
-
-function applyAccentColor(color: string) {
-  document.documentElement.style.setProperty('--c-accent', color)
 }
 
 export function SettingsPage() {
@@ -63,13 +62,6 @@ export function SettingsPage() {
       form.reset(toSettingsFormValues(settingsQuery.data))
     }
   }, [form, settingsQuery.data])
-
-  useEffect(() => {
-    const settings = settingsQuery.data
-    if (settings?.primary_color) {
-      applyAccentColor(settings.primary_color)
-    }
-  }, [settingsQuery.data])
 
   const watchedColor = form.watch('primaryColor')
 
@@ -164,6 +156,8 @@ export function SettingsPage() {
             {form.formState.errors.checkinsPerGrau ? <small>{form.formState.errors.checkinsPerGrau.message}</small> : null}
             <small className="field-hint">Numero de check-ins necessario para sugerir promocao de grau</small>
           </label>
+
+          <OpeningHoursEditor control={form.control} register={form.register} />
 
           {mutation.error ? <p className="form-error">Nao foi possivel salvar as configuracoes da academia.</p> : null}
           {mutation.isSuccess ? <p className="form-success">Configuracoes salvas.</p> : null}

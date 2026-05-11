@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   academySettingsSchema,
   calculateDashboardMetrics,
+  getCurrentPeriod,
+  getDayKeyFromDate,
+  getEmptyOpeningHours,
+  getNextPeriod,
   getPaymentStatusLabel,
+  getTodaySchedule,
   isDateBeforeToday,
   studentFormSchema,
   toAcademySettingsPayload,
@@ -135,6 +140,7 @@ describe('validacao de formularios', () => {
       contactPhone: '',
       logoUrl: '',
       name: 'Alpha Force Jiu-Jitsu',
+      openingHours: getEmptyOpeningHours(),
       primaryColor: '#111111'
     })
 
@@ -143,7 +149,72 @@ describe('validacao de formularios', () => {
       phone: null,
       logo_url: null,
       name: 'Alpha Force Jiu-Jitsu',
-      primary_color: '#111111'
+      primary_color: '#111111',
+      opening_hours: getEmptyOpeningHours()
     })
+  })
+
+  it('rejeita horarios invalidos de aula', () => {
+    const invalid = {
+      address: '',
+      checkinsPerGrau: '8',
+      contactEmail: '',
+      contactPhone: '',
+      logoUrl: '',
+      name: 'Test',
+      openingHours: {
+        ...getEmptyOpeningHours(),
+        monday: [{ start: '25:00', end: '26:00' }]
+      },
+      primaryColor: '#000000'
+    }
+
+    expect(() => academySettingsSchema.parse(invalid)).toThrow()
+  })
+
+  it('rejeita periodo com fim antes do inicio', () => {
+    const invalid = {
+      address: '',
+      checkinsPerGrau: '8',
+      contactEmail: '',
+      contactPhone: '',
+      logoUrl: '',
+      name: 'Test',
+      openingHours: {
+        ...getEmptyOpeningHours(),
+        monday: [{ start: '20:00', end: '14:00' }]
+      },
+      primaryColor: '#000000'
+    }
+
+    expect(() => academySettingsSchema.parse(invalid)).toThrow()
+  })
+})
+
+describe('horarios de aula', () => {
+  it('retorna horarios do dia atual', () => {
+    const hours = {
+      ...getEmptyOpeningHours(),
+      monday: [{ start: '06:00', end: '07:30' }]
+    }
+
+    const monday = new Date('2026-05-11T12:00:00') // Monday
+    expect(getDayKeyFromDate(monday)).toBe('monday')
+    expect(getTodaySchedule(hours)).toEqual([{ start: '06:00', end: '07:30' }])
+  })
+
+  it('identifica periodo atual', () => {
+    const period = { start: '14:00', end: '15:30' }
+    expect(getCurrentPeriod([period], new Date('2026-05-11T14:30:00'))).toEqual(period)
+    expect(getCurrentPeriod([period], new Date('2026-05-11T16:00:00'))).toBeNull()
+  })
+
+  it('encontra proximo periodo', () => {
+    const periods = [
+      { start: '06:00', end: '07:30' },
+      { start: '20:00', end: '21:30' }
+    ]
+    expect(getNextPeriod(periods, new Date('2026-05-11T12:00:00'))).toEqual({ start: '20:00', end: '21:30' })
+    expect(getNextPeriod(periods, new Date('2026-05-11T22:00:00'))).toBeNull()
   })
 })

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { AcademySettingsProvider } from './AcademySettingsContext'
 import { AuthProvider } from './AuthProvider'
 import { QueryProvider } from './QueryProvider'
 import { InstallPrompt } from '../../shared/components/InstallPrompt'
@@ -12,9 +13,11 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <QueryProvider>
       <AuthProvider>
-        {children}
-        <InstallPrompt />
-        <UpdatePrompt />
+        <AcademySettingsProvider>
+          {children}
+          <InstallPrompt />
+          <UpdatePrompt />
+        </AcademySettingsProvider>
       </AuthProvider>
     </QueryProvider>
   )

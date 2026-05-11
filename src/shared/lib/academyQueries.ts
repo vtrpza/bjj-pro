@@ -116,7 +116,7 @@ export async function fetchAcademySettings(client: SupabaseClient | null, academ
 
   const { data, error } = await client
     .from('academies')
-    .select('id, name, logo_url, primary_color, email, phone, address, checkins_per_grau')
+    .select('id, name, logo_url, primary_color, email, phone, address, checkins_per_grau, opening_hours')
     .eq('id', academyId)
     .maybeSingle()
 
@@ -315,7 +315,7 @@ export async function fetchGraduationStudents(
     .from('checkins')
     .select('student_id')
     .eq('academy_id', academyId)
-    .eq('student_id', studentIds)
+    .in('student_id', studentIds)
     .eq('status', 'valid')
 
   if (checkinsError) {
@@ -402,14 +402,11 @@ export async function promoteStudent({
   assertSupabase(client)
   assertAcademyId(academyId)
 
+  const payload = { academyId, newBeltId, newGrau, reason, studentId }
+  console.log('[promoteStudent] payload:', JSON.stringify(payload))
+
   const { data, error } = await client.functions.invoke('graduation-promote', {
-    body: {
-      academyId,
-      newBeltId,
-      newGrau,
-      reason,
-      studentId
-    }
+    body: payload
   })
 
   if (error) {

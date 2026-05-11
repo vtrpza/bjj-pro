@@ -44,6 +44,21 @@ export type CheckinRecord = {
   created_at: string
 }
 
+export type TimePeriod = {
+  start: string
+  end: string
+}
+
+export type AcademyOpeningHours = {
+  monday: TimePeriod[]
+  tuesday: TimePeriod[]
+  wednesday: TimePeriod[]
+  thursday: TimePeriod[]
+  friday: TimePeriod[]
+  saturday: TimePeriod[]
+  sunday: TimePeriod[]
+}
+
 export type AcademySettings = {
   id: string
   name: string
@@ -53,6 +68,7 @@ export type AcademySettings = {
   phone: string | null
   address: string | null
   checkins_per_grau: number | null
+  opening_hours: AcademyOpeningHours | null
 }
 
 export type DashboardMetrics = {
@@ -114,13 +130,43 @@ export function getBeltClass(belt: BjjBelt): string {
 }
 
 export const studentFormSchema = z.object({
-  fullName: z.string().trim().min(3, 'Informe o nome do aluno.'),
+  fullName: z
+    .string()
+    .trim()
+    .min(3, 'Informe o nome do aluno.')
+    .max(120, 'Nome muito longo.')
+    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Nome deve conter apenas letras.'),
   email: z.string().trim().email('Informe um e-mail valido.').or(z.literal('')),
-  phone: z.string().trim().max(32, 'Telefone muito longo.').or(z.literal('')),
+  phone: z
+    .string()
+    .trim()
+    .refine((val) => {
+      if (!val) return true
+      const digits = val.replace(/\D/g, '')
+      return digits.length >= 10 && digits.length <= 11
+    }, 'Informe um telefone valido com DDD.')
+    .or(z.literal('')),
   beltId: z.string().trim().min(1, 'Selecione a faixa do aluno.'),
   grau: z.number().int().min(0, 'Grau minimo e 0.').max(4, 'Grau maximo e 4.'),
   mensalidadeDueDate: z.string().or(z.literal('')),
   status: z.enum(['active', 'inactive'])
+})
+
+export const timePeriodSchema = z.object({
+  start: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Use formato HH:MM para inicio.'),
+  end: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Use formato HH:MM para fim.')
+}).refine((data) => data.start < data.end, {
+  message: 'Horario de fim deve ser apos o inicio.'
+})
+
+export const openingHoursSchema = z.object({
+  monday: z.array(timePeriodSchema),
+  tuesday: z.array(timePeriodSchema),
+  wednesday: z.array(timePeriodSchema),
+  thursday: z.array(timePeriodSchema),
+  friday: z.array(timePeriodSchema),
+  saturday: z.array(timePeriodSchema),
+  sunday: z.array(timePeriodSchema)
 })
 
 export const academySettingsSchema = z.object({
@@ -133,7 +179,8 @@ export const academySettingsSchema = z.object({
   checkinsPerGrau: z.string().trim().refine((val) => {
     const num = Number(val)
     return Number.isInteger(num) && num >= 1 && num <= 30
-  }, { message: 'Informe um numero entre 1 e 30.' })
+  }, { message: 'Informe um numero entre 1 e 30.' }),
+  openingHours: openingHoursSchema
 })
 
 export type StudentFormValues = z.infer<typeof studentFormSchema>
@@ -278,6 +325,104 @@ export function toAcademySettingsPayload(values: AcademySettingsFormValues) {
     email: toNullableText(values.contactEmail),
     phone: toNullableText(values.contactPhone),
     address: toNullableText(values.address),
-    checkins_per_grau: Number(values.checkinsPerGrau)
+    checkins_per_grau: Number(values.checkinsPerGrau),
+    opening_hours: values.openingHours
+  }
+}
+
+export const DAY_KEYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday'
+] as const
+
+export type DayKey = (typeof DAY_KEYS)[number]
+
+export const DAY_LABELS: Record<DayKey, string> = {
+  monday: 'Segunda-feira',
+  tuesday: 'Terca-feira',
+  wednesday: 'Quarta-feira',
+  thursday: 'Quinta-feira',
+  friday: 'Sexta-feira',
+  saturday: 'Sabado',
+  sunday: 'Domingo'
+}
+
+export const SHORT_DAY_LABELS: Record<DayKey, string> = {
+  monday: 'Seg',
+  tuesday: 'Ter',
+  wednesday: 'Qua',
+  thursday: 'Qui',
+  friday: 'Sex',
+  saturday: 'Sab',
+  sunday: 'Dom'
+}
+
+export function getDayKeyFromDate(date = new Date()): DayKey {
+  const dayIndex = date.getDay()
+  const mapping: DayKey[] = [
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday'
+  ]
+  return mapping[dayIndex]
+}
+
+export function getTodaySchedule(
+  openingHours: AcademyOpeningHours | null | undefined
+): TimePeriod[] {
+  if (!openingHours) return []
+  return openingHours[getDayKeyFromDate()]
+}
+
+export function isCurrentlyInPeriod(period: TimePeriod, now = new Date()): boolean {
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+  const [startH, startM] = period.start.split(':').map(Number)
+  const [endH, endM] = period.end.split(':').map(Number)
+  const startMinutes = startH * 60 + startM
+  const endMinutes = endH * 60 + endM
+  return currentMinutes >= startMinutes && currentMinutes < endMinutes
+}
+
+export function getCurrentPeriod(
+  periods: TimePeriod[],
+  now = new Date()
+): TimePeriod | null {
+  return periods.find((p) => isCurrentlyInPeriod(p, now)) ?? null
+}
+
+export function getNextPeriod(
+  periods: TimePeriod[],
+  now = new Date()
+): TimePeriod | null {
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+  const sorted = [...periods].sort((a, b) => a.start.localeCompare(b.start))
+  return sorted.find((p) => {
+    const [h, m] = p.start.split(':').map(Number)
+    return h * 60 + m > currentMinutes
+  }) ?? null
+}
+
+export function formatPeriod(period: TimePeriod): string {
+  return `${period.start} - ${period.end}`
+}
+
+export function getEmptyOpeningHours(): AcademyOpeningHours {
+  return {
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+    sunday: []
   }
 }

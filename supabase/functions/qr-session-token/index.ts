@@ -1,5 +1,5 @@
 import { createServiceClient, getAuthUser } from '../_shared/supabase.ts'
-import { ApiError, assertPost, errorResponse, jsonResponse, optionsResponse } from '../_shared/http.ts'
+import { ApiError, assertPost, errorResponse, jsonResponse, optionsResponse, readJsonObject } from '../_shared/http.ts'
 import { requireEnv } from '../_shared/env.ts'
 import { optionalPositiveInteger, optionalString } from '../_shared/validation.ts'
 import { createManualCode, sha256Hex, signQrPayload } from '../_shared/qr.ts'
@@ -15,13 +15,7 @@ Deno.serve(async (request) => {
     const supabase = createServiceClient()
     const user = await getAuthUser(request, supabase)
     const secret = requireEnv('QR_TOKEN_SECRET')
-    const parsedBody = await request.json().catch(() => ({}))
-
-    if (!parsedBody || typeof parsedBody !== 'object' || Array.isArray(parsedBody)) {
-      throw new ApiError(400, 'bad_request', 'Corpo JSON invalido.')
-    }
-
-    const body = parsedBody as Record<string, unknown>
+    const body = await readJsonObject(request)
     const academyId = optionalString(body, 'academyId')
     const title = optionalString(body, 'title') ?? 'Treino de Jiu-Jitsu'
     const ttlMinutes = Math.min(optionalPositiveInteger(body, 'ttlMinutes') ?? 10, 30)

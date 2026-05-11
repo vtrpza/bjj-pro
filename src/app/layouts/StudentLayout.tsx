@@ -4,19 +4,26 @@ import { LogoutButton } from '../../features/auth/LogoutButton'
 import { MobileNavSheet } from '../../shared/components/MobileNavSheet'
 import { NavFab } from '../../shared/components/NavFab'
 import { useAuth } from '../providers/AuthContext'
+import { useAcademySettings } from '../providers/AcademySettingsContext'
 import { studentNavigation } from '../../shared/lib/navigation'
 
 export function StudentLayout() {
   const { profile } = useAuth()
+  const { settings } = useAcademySettings()
   const [isNavOpen, setIsNavOpen] = useState(false)
   const firstName = profile?.fullName?.split(' ')[0] ?? 'Aluno'
+  const title = settings?.name ?? 'Area do aluno'
 
   return (
     <div className="app-shell student-shell">
       <header className="topbar">
-        <div className="brand-mark" aria-hidden="true">JJ</div>
+        {settings?.logo_url ? (
+          <img alt="Logo" className="brand-mark-img" src={settings.logo_url} />
+        ) : (
+          <div className="brand-mark" aria-hidden="true">JJ</div>
+        )}
         <div className="topbar-title">
-          <strong>Area do aluno</strong>
+          <strong>{title}</strong>
           <span>Ola, {firstName}</span>
         </div>
         <LogoutButton />
