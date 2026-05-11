@@ -1,14 +1,22 @@
+import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { LogoutButton } from '../../features/auth/LogoutButton'
+import { MobileNavSheet } from '../../shared/components/MobileNavSheet'
+import { NavFab } from '../../shared/components/NavFab'
+import { useAuth } from '../providers/AuthContext'
 import { adminNavigation } from '../../shared/lib/navigation'
 
 export function AcademyLayout() {
+  const { isPlaceholderMode, profile } = useAuth()
+  const [isNavOpen, setIsNavOpen] = useState(false)
+  const title = isPlaceholderMode ? 'Sua Academia' : (profile?.fullName ?? 'Administração')
+
   return (
     <div className="app-shell">
       <header className="topbar">
         <div className="brand-mark" aria-hidden="true">JJ</div>
         <div className="topbar-title">
-          <strong>Alpha Force</strong>
+          <strong>{title}</strong>
           <span>Academia de Jiu-Jitsu</span>
         </div>
         <LogoutButton />
@@ -18,7 +26,6 @@ export function AcademyLayout() {
         <aside className="sidebar" aria-label="Navegacao da academia">
           {adminNavigation.map((item) => (
             <NavLink className="nav-item" key={item.href} to={item.href} end={item.end}>
-              <span aria-hidden="true">{item.icon}</span>
               {item.label}
             </NavLink>
           ))}
@@ -29,14 +36,13 @@ export function AcademyLayout() {
         </main>
       </div>
 
-      <nav className="bottom-nav" aria-label="Navegacao principal da academia">
-        {adminNavigation.map((item) => (
-          <NavLink className="nav-item" key={item.href} to={item.href} end={item.end}>
-            <span aria-hidden="true">{item.icon}</span>
-            {item.shortLabel ?? item.label}
-          </NavLink>
-        ))}
-      </nav>
+      <NavFab isOpen={isNavOpen} onClick={() => setIsNavOpen((v) => !v)} />
+      <MobileNavSheet
+        items={adminNavigation}
+        isOpen={isNavOpen}
+        onClose={() => setIsNavOpen(false)}
+        title="Menu da Academia"
+      />
     </div>
   )
 }

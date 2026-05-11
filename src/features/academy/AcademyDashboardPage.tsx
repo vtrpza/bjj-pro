@@ -74,7 +74,7 @@ export function AcademyDashboardPage() {
         />
       ) : (
         <div className="card next-card">
-          <h2>Pix em aberto</h2>
+          <h2>💰 Pix em aberto</h2>
           <p>{metrics.openPixPayments} mensalidade{metrics.openPixPayments === 1 ? '' : 's'} aguardando webhook confirmado da Asaas.</p>
         </div>
       )}

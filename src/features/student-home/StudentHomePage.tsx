@@ -96,7 +96,7 @@ export function StudentHomePage() {
           </div>
 
           <div className="card next-card">
-            <h2>Progresso informado por presencas</h2>
+            <h2>📈 Progresso informado por presencas</h2>
             <div className="progress-track" aria-label={`Progresso ${summary.progressPercent}%`}>
               <span className={beltClass} style={{ width: `${summary.progressPercent}%` }} />
             </div>
@@ -105,7 +105,7 @@ export function StudentHomePage() {
           </div>
 
           <div className="card next-card quick-actions-card">
-            <h2>Acoes rapidas</h2>
+            <h2>⚡ Acoes rapidas</h2>
             <Link className="btn accent block" to="/aluno/check-in">Fazer check-in</Link>
             {lastCheckin ? (
               <p className="last-checkin">Ultimo check-in: {formatCheckinTime(lastCheckin.checked_in_at)}</p>
